@@ -58,7 +58,8 @@ subprojects {
   configurations.all { resolutionStrategy { preferProjectModules() } }
   apply plugin: 'com.github.johnrengelman.shadow'
   shadowJar {
-    archiveVersion = '7.2.0.1'
+    archiveVersion = '7.2.0'
+    archiveClassifier = null
   }
 }
 
@@ -70,7 +71,7 @@ project(':asm') {
   description = parent.description
   provides = ['org.objectweb.asm', 'org.objectweb.asm.signature']
   shadowJar {
-    relocate 'org.objectweb.asm', 'org.graalvm.shadowed.org.objectweb.asm'
+    relocate 'org.objectweb.asm', 'com.oracle.truffle.api.impl.asm'
     baseName = 'asm-shadowed'
   }
 }
@@ -80,7 +81,7 @@ project(':asm-analysis') {
   provides = ['org.objectweb.asm.tree.analysis']
   requires = [':asm-tree']
   shadowJar {
-    relocate 'org.objectweb.asm', 'org.graalvm.shadowed.org.objectweb.asm'
+    relocate 'org.objectweb.asm', 'com.oracle.truffle.api.impl.asm'
     baseName = 'asm-analysis-shadowed'
   }
 }
@@ -89,10 +90,29 @@ project(':asm-commons') {
   description = "Usefull class adapters based on ${parent.description}"
   provides = ['org.objectweb.asm.commons']
   requires = [':asm', ':asm-tree', ':asm-analysis']
-  dependencies { testCompile project(':asm-util') }
+  //dependencies { testCompile project(':asm-util') }
+  task testJar(type: Jar) {
+    manifest {
+      attributes (
+        'Module-Requires': '',
+        '-pluginpath': '', '-classpath': '', '-removeheaders': '', '-plugin': '',
+      )
+    }
+  }
   shadowJar {
-    relocate 'org.objectweb.asm', 'org.graalvm.shadowed.org.objectweb.asm'
-    baseName = 'asm-commons-shadowed'
+    relocate 'org.objectweb.asm', 'com.oracle.truffle.api.impl.asm'
+    //baseName = 'asm-commons-shadowed'
+    baseName = 'asm-shadowed'
+    manifest {
+      attributes (
+        'Bundle-SymbolicName': 'com.oracle.truffle.api.impl.asm',
+        'Export-Package': 'com.oracle.truffle.api.impl.asm;version=7.2.0',
+      )
+      inheritFrom project.tasks.testJar.manifest
+    }
+    exclude 'module-info.class'
+    //exclude 'org/objectweb'
+    exclude 'META-INF/MANIFEST.MF'
   }
 }
 
@@ -108,7 +128,7 @@ project(':asm-tree') {
   provides = ['org.objectweb.asm.tree']
   requires = [':asm']
   shadowJar {
-    relocate 'org.objectweb.asm', 'org.graalvm.shadowed.org.objectweb.asm'
+    relocate 'org.objectweb.asm', 'com.oracle.truffle.api.impl.asm'
     baseName = 'asm-tree-shadowed'
   }
 }
@@ -119,7 +139,7 @@ project(':asm-util') {
   requires = [':asm', ':asm-tree', ':asm-analysis']
   dependencies { testCompile 'org.codehaus.janino:janino:3.0.11' }
   shadowJar {
-    relocate 'org.objectweb.asm', 'org.graalvm.shadowed.org.objectweb.asm'
+    relocate 'org.objectweb.asm', 'com.oracle.truffle.api.impl.asm'
     baseName = 'asm-util-shadowed'
   }
 }
