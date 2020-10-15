@@ -35,6 +35,7 @@ plugins { id 'biz.aQute.bnd.builder' version '4.2.0' apply false }
 plugins { id 'com.github.sherter.google-java-format' version '0.8' apply false }
 plugins { id 'me.champeau.gradle.jmh' version '0.4.8' apply false }
 plugins { id 'org.sonarqube' version '2.7.1' apply false }
+plugins { id "com.github.johnrengelman.shadow" version "6.0.0" apply false }
 
 description = 'ASM, a very small and fast Java bytecode manipulation framework'
 
@@ -55,6 +56,10 @@ subprojects {
   // without this rule Gradle can mix ASM jars of different versions (e.g.
   // asm-6.0.jar with the asm-tree.jar built locally).
   configurations.all { resolutionStrategy { preferProjectModules() } }
+  apply plugin: 'com.github.johnrengelman.shadow'
+  shadowJar {
+    archiveVersion = '7.2.0.1'
+  }
 }
 
 // -----------------------------------------------------------------------------
@@ -64,12 +69,20 @@ subprojects {
 project(':asm') {
   description = parent.description
   provides = ['org.objectweb.asm', 'org.objectweb.asm.signature']
+  shadowJar {
+    relocate 'org.objectweb.asm', 'org.graalvm.shadowed.org.objectweb.asm'
+    baseName = 'asm-shadowed'
+  }
 }
 
 project(':asm-analysis') {
   description = "Static code analysis API of ${parent.description}"
   provides = ['org.objectweb.asm.tree.analysis']
   requires = [':asm-tree']
+  shadowJar {
+    relocate 'org.objectweb.asm', 'org.graalvm.shadowed.org.objectweb.asm'
+    baseName = 'asm-analysis-shadowed'
+  }
 }
 
 project(':asm-commons') {
@@ -77,6 +90,10 @@ project(':asm-commons') {
   provides = ['org.objectweb.asm.commons']
   requires = [':asm', ':asm-tree', ':asm-analysis']
   dependencies { testCompile project(':asm-util') }
+  shadowJar {
+    relocate 'org.objectweb.asm', 'org.graalvm.shadowed.org.objectweb.asm'
+    baseName = 'asm-commons-shadowed'
+  }
 }
 
 project(':asm-test') {
@@ -90,6 +107,10 @@ project(':asm-tree') {
   description = "Tree API of ${parent.description}"
   provides = ['org.objectweb.asm.tree']
   requires = [':asm']
+  shadowJar {
+    relocate 'org.objectweb.asm', 'org.graalvm.shadowed.org.objectweb.asm'
+    baseName = 'asm-tree-shadowed'
+  }
 }
 
 project(':asm-util') {
@@ -97,6 +118,10 @@ project(':asm-util') {
   provides = ['org.objectweb.asm.util']
   requires = [':asm', ':asm-tree', ':asm-analysis']
   dependencies { testCompile 'org.codehaus.janino:janino:3.0.11' }
+  shadowJar {
+    relocate 'org.objectweb.asm', 'org.graalvm.shadowed.org.objectweb.asm'
+    baseName = 'asm-util-shadowed'
+  }
 }
 
 // Use "gradle benchmarks:jmh [-PjmhInclude='<regex>']" to run the benchmarks.
